@@ -3,6 +3,7 @@
 #include <std_msgs/Bool.h> // boolean message
 
 bool g_lidar_alarm=false; // global var for lidar alarm
+int last_check_bad = 0;
 
 void alarmCallback(const std_msgs::Bool& alarm_msg) 
 { 
@@ -52,8 +53,16 @@ int main(int argc, char **argv) {
           loop_timer.sleep();
           }
         //here if got an alarm; turn CCW until alarm clears
+        last_check_bad++;
         twist_cmd.linear.x=0.0; //stop moving forward
-        twist_cmd.angular.z=yaw_rate; //and start spinning in place
+        twist_cmd.angular.z=yaw_rate; //and start spinning left
+        if(last_check_bad>=3){
+          twist_cmd.angular.z= -yaw_rate; //and start spinning right
+          last_check_bad = 0;
+
+        }
+
+        
         timer=0.0; //reset the timer
         while(g_lidar_alarm) {
           twist_commander.publish(twist_cmd);
